@@ -6,21 +6,28 @@ import "./ForgotPassword.css";
 
 export default function ForgotPasswordPage() {
   const [emailValue, setEmailValue] = useState("");
-  const [error, setError] = useState(0); // 0: nothing, 1: success; 2: err
-  // TODO: check if email is valid
+  const [status, setStatus] = useState(null); // null: no status, 'success', 'error', 'invalid'
 
-  const handleSubmit = () => {
-    axios
-      .post("/request_password_reset", {
+  const isValidEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const handleSubmit = async () => {
+    if (!isValidEmail(emailValue)) {
+      setStatus("invalid");
+      return;
+    }
+
+    try {
+      await axios.post("/request_password_reset", {
         email: emailValue,
-      })
-      .then((res) => {
-        setError(1);
-      })
-      .catch((err) => {
-        setError(2);
-        console.log(err);
       });
+      setStatus("success");
+    } catch (error) {
+      console.error(error);
+      setStatus("error");
+    }
   };
 
   return (
@@ -29,26 +36,32 @@ export default function ForgotPasswordPage() {
         <h1>Forgot your password?</h1>
         <h2>No problem, request a password reset to your email here.</h2>
         <TextField
-          id="standard-basic"
           label="Email"
           variant="standard"
           className="email-input"
           type="email"
           value={emailValue}
-          onChange={(event) => setEmailValue(event.target.value) & setError(0)}
-          error={error === 2}
+          onChange={(e) => {
+            setEmailValue(e.target.value);
+            setStatus(null);
+          }}
+          error={status === "error" || status === "invalid"}
           helperText={
-            error === 2
+            status === "error"
               ? "No account was found with this email."
-              : error === 1 && "Email was sent successfully."
+              : status === "success"
+              ? "Email was sent successfully."
+              : status === "invalid"
+              ? "Please enter a valid email address."
+              : ""
           }
         />
         <div className="btn-container">
           <Button
             variant="contained"
             className="btn"
-            disabled={emailValue === ""}
-            onClick={() => handleSubmit()}
+            disabled={emailValue.trim() === ""}
+            onClick={handleSubmit}
           >
             Send Email
           </Button>
