@@ -176,3 +176,4 @@ const mapActionsToProps = {
 };
 
 export default connect(mapStateToProps, mapActionsToProps)(Composer);
+// new 
